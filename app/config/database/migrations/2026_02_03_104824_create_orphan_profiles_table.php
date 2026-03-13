@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+{
+    Schema::create('orphan_profiles', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('orphan_id')->constrained('orphans')->onDelete('cascade');
+        $table->text('background_history')->nullable();
+        $table->string('disability_type')->nullable();
+        $table->text('disability_details')->nullable();
+        $table->boolean('special_care_required')->default(false);
+        $table->string('blood_group')->nullable();
+        $table->text('medical_conditions')->nullable();
+        $table->string('education_status')->nullable();
+        $table->string('school_name')->nullable();
+        $table->string('current_class')->nullable();
+        $table->timestamps();
+    });
+}
+
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('orphan_profiles');
+    }
+};
