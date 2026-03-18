@@ -58,12 +58,20 @@ Route::middleware(['auth'])->group(function () {
         ->name('dashboard');
 
     // Inmates (Orphans)
+    Route::post('/orphans/import', [OrphanController::class, 'import'])
+        ->name('orphans.import');
+    Route::delete('/orphans', [OrphanController::class, 'clearAll'])
+        ->name('orphans.clear');
     Route::resource('orphans', OrphanController::class);
 
     // Volunteers
     Route::resource('volunteers', VolunteerController::class);
 
     // Sponsors (Staffs)
+    Route::post('/sponsors/import', [SponsorController::class, 'import'])
+        ->name('sponsors.import');
+    Route::delete('/sponsors', [SponsorController::class, 'clearAll'])
+        ->name('sponsors.clear');
     Route::resource('sponsors', SponsorController::class);
 
     // Profile

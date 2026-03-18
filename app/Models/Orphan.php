@@ -10,8 +10,16 @@ class Orphan extends Model
     use HasFactory;
 
     protected $fillable = [
+        'serial_no',
         'full_name',
+        'age',
         'gender',
+        'category',
+        'address',
+        'home',
+        'aadhaar_number',
+        'contact_number',
+        'remarks',
         'date_of_birth',
         'admission_date',
         'photo',

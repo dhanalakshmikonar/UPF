@@ -27,6 +27,8 @@ class HomeDocumentController extends Controller
         'mr-mi-w',
     ];
 
+    private const ALLOWED_EXTENSIONS = ['csv', 'txt', 'xlsx'];
+
     public function store(Request $request, string $category): RedirectResponse
     {
         if (!in_array($category, self::ALLOWED_CATEGORIES, true)) {
@@ -34,7 +36,7 @@ class HomeDocumentController extends Controller
         }
 
         $request->validate([
-            'document' => 'required|file|mimes:csv,txt,xlsx|max:10240',
+            'document' => 'required|file|max:10240',
         ]);
 
         $file = $request->file('document');
@@ -43,9 +45,14 @@ class HomeDocumentController extends Controller
             return back()->with('error', 'Failed to upload document.');
         }
 
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            return back()->with('error', 'Please upload a CSV, TXT, or XLSX file.');
+        }
+
         $originalName = $file->getClientOriginalName();
         $storedName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-        $extension = strtolower($file->getClientOriginalExtension());
         $path = $file->storeAs(
             "home_documents/{$category}",
             "{$storedName}.{$extension}",
@@ -83,6 +90,7 @@ class HomeDocumentController extends Controller
             });
         } catch (\Throwable $e) {
             Storage::disk('public')->delete($path);
+            report($e);
 
             return back()->with('error', 'Unable to read this file. Please upload a valid CSV or XLSX file.');
         }
