@@ -16,6 +16,10 @@ Route::get('/home', function () {
     return view('home.index');
 })->name('home');
 
+Route::get('/directory/home', function () {
+    return view('directory.home');
+})->name('directory.home');
+
 // 8 Detail Pages (Fetching parsed records)
 Route::get('/home/boys-hostel', fn() => view('home.boys', ['records' => HomeDocumentRecord::where('category', 'boys-hostel')->get()]))->name('home.boys');
 Route::get('/home/girls-hostel', fn() => view('home.girls', ['records' => HomeDocumentRecord::where('category', 'girls-hostel')->get()]))->name('home.girls');
@@ -66,6 +70,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Volunteers
     Route::resource('volunteers', VolunteerController::class);
+    Route::get('/community-connect-program', [VolunteerController::class, 'index'])
+        ->name('community-connect.index');
 
     // Sponsors (Staffs)
     Route::post('/sponsors/import', [SponsorController::class, 'import'])

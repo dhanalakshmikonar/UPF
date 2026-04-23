@@ -3,7 +3,7 @@
 @section('page-title', 'Edit Inmate')
 
 @section('content')
-<div class="card p-4 shadow-sm">
+<div class="card p-4 shadow-sm erp-form-card">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
             <h3 class="mb-1">Edit Inmate</h3>

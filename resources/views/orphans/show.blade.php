@@ -15,15 +15,15 @@
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-2"><strong>S.NO</strong><div>{{ $orphan->serial_no ?? '-' }}</div></div>
+    <div class="row g-3 detail-grid">
+        <div class="col-md-2"><strong>S.NO</strong><div>@displaySerial($orphan->serial_no)</div></div>
         <div class="col-md-4"><strong>NAME</strong><div>{{ $orphan->full_name }}</div></div>
         <div class="col-md-2"><strong>AGE</strong><div>{{ $orphan->age ?? '-' }}</div></div>
         <div class="col-md-2"><strong>GENDER</strong><div>{{ $orphan->gender }}</div></div>
         <div class="col-md-2"><strong>STATUS</strong><div>{{ $orphan->status }}</div></div>
 
-        <div class="col-md-3"><strong>D.O.B</strong><div>{{ $orphan->date_of_birth }}</div></div>
-        <div class="col-md-3"><strong>D.O.J</strong><div>{{ $orphan->admission_date ?? '-' }}</div></div>
+        <div class="col-md-3"><strong>D.O.B</strong><div>@displayDate($orphan->date_of_birth)</div></div>
+        <div class="col-md-3"><strong>D.O.J</strong><div>@displayDate($orphan->admission_date)</div></div>
         <div class="col-md-3"><strong>CATEGORY</strong><div>{{ $orphan->category ?? '-' }}</div></div>
         <div class="col-md-3"><strong>HOME</strong><div>{{ $orphan->home ?? '-' }}</div></div>
 

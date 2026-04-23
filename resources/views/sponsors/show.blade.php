@@ -13,19 +13,19 @@
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-2"><strong>S.NO</strong><div>{{ $sponsor->serial_no ?? '-' }}</div></div>
+    <div class="row g-3 detail-grid">
+        <div class="col-md-2"><strong>S.NO</strong><div>@displaySerial($sponsor->serial_no)</div></div>
         <div class="col-md-4"><strong>NAME</strong><div>{{ $sponsor->name }}</div></div>
         <div class="col-md-2"><strong>AGE</strong><div>{{ $sponsor->age ?? '-' }}</div></div>
         <div class="col-md-2"><strong>GENDER</strong><div>{{ $sponsor->gender ?? '-' }}</div></div>
         <div class="col-md-2"><strong>CATEGORY</strong><div>{{ $sponsor->category ?? '-' }}</div></div>
 
-        <div class="col-md-3"><strong>D.O.B</strong><div>{{ $sponsor->date_of_birth ?? '-' }}</div></div>
-        <div class="col-md-3"><strong>D.O.J</strong><div>{{ $sponsor->date_of_joining ?? '-' }}</div></div>
+        <div class="col-md-3"><strong>D.O.B</strong><div>@displayDate($sponsor->date_of_birth)</div></div>
+        <div class="col-md-3"><strong>D.O.J</strong><div>@displayDate($sponsor->date_of_joining)</div></div>
         <div class="col-md-3"><strong>HOME</strong><div>{{ $sponsor->home ?? '-' }}</div></div>
-        <div class="col-md-3"><strong>AADHAR NUMBER</strong><div>{{ $sponsor->aadhaar_number ?? '-' }}</div></div>
+        <div class="col-md-3"><strong>AADHAR NUMBER</strong><div>@displayIdentifier($sponsor->aadhaar_number)</div></div>
 
-        <div class="col-12"><strong>CONTACT NUMBER</strong><div>{{ $sponsor->contact_number ?? '-' }}</div></div>
+        <div class="col-12"><strong>CONTACT NUMBER</strong><div>@displayIdentifier($sponsor->contact_number)</div></div>
         <div class="col-12"><strong>ADDRESS</strong><div>{{ $sponsor->address ?? '-' }}</div></div>
         <div class="col-12"><strong>REMARKS</strong><div>{{ $sponsor->remarks ?? '-' }}</div></div>
 

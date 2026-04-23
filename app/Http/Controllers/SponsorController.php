@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sponsor;
+use App\Support\ExcelValueFormatter;
 use App\Support\SpreadsheetParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -64,8 +65,8 @@ class SponsorController extends Controller
                     $category = $this->getRowValue($row, ['category', 'department']);
                     $address = $this->getRowValue($row, 'address');
                     $home = $this->getRowValue($row, 'home');
-                    $aadhaarNumber = $this->getRowValue($row, ['aadhaar_number', 'aadhar_number', 'aadhaar', 'aadhar']);
-                    $contactNumber = $this->getRowValue($row, ['contact_number', 'contact', 'phone', 'mobile']);
+                    $aadhaarNumber = ExcelValueFormatter::identifier($this->getRowValue($row, ['aadhaar_number', 'aadhar_number', 'aadhaar', 'aadhar']));
+                    $contactNumber = ExcelValueFormatter::identifier($this->getRowValue($row, ['contact_number', 'contact', 'phone', 'mobile']));
                     $remarks = $this->getRowValue($row, ['remarks', 'remark']);
 
                     if ($name === null && $dateOfBirth === null) {
@@ -152,6 +153,9 @@ class SponsorController extends Controller
         }
 
         $data['phone'] = $data['phone'] ?? $data['contact_number'] ?? null;
+        $data['aadhaar_number'] = ExcelValueFormatter::identifier($data['aadhaar_number'] ?? null);
+        $data['contact_number'] = ExcelValueFormatter::identifier($data['contact_number'] ?? null);
+        $data['phone'] = ExcelValueFormatter::identifier($data['phone'] ?? null);
         $data['amount_donated'] = $data['amount_donated'] ?? 0;
         $data['donation_date'] = $data['donation_date'] ?? null;
 
@@ -212,6 +216,9 @@ class SponsorController extends Controller
         }
 
         $data['phone'] = $data['phone'] ?? $data['contact_number'] ?? null;
+        $data['aadhaar_number'] = ExcelValueFormatter::identifier($data['aadhaar_number'] ?? null);
+        $data['contact_number'] = ExcelValueFormatter::identifier($data['contact_number'] ?? null);
+        $data['phone'] = ExcelValueFormatter::identifier($data['phone'] ?? null);
         $data['amount_donated'] = $data['amount_donated'] ?? 0;
         $data['donation_date'] = $data['donation_date'] ?? null;
 

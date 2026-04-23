@@ -1,11 +1,16 @@
 @extends('layouts.erp')
 
+@section('page-title', $pageTitle ?? 'Volunteers')
+
 @section('content')
 <div class="card p-4">
-    <div class="d-flex justify-content-between mb-3">
-        <h3>Volunteers</h3>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <div>
+            <h3 class="mb-1">{{ $pageTitle ?? 'Volunteers' }}</h3>
+            <p class="text-muted mb-0">Track volunteer engagement and community support records.</p>
+        </div>
         <a href="{{ route('volunteers.create') }}" class="btn btn-primary">
-             Add Volunteer
+            <i class="bi bi-plus-lg"></i> Add Volunteer
         </a>
     </div>
 
@@ -15,10 +20,26 @@
         </div>
     @endif
 
-    <table class="table table-bordered">
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="p-3 rounded border bg-light">
+                <div class="text-muted small text-uppercase fw-bold">Total Volunteers</div>
+                <div class="fs-4 fw-bold">{{ $volunteers->count() }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 rounded border bg-light">
+                <div class="text-muted small text-uppercase fw-bold">Active</div>
+                <div class="fs-4 fw-bold">{{ $volunteers->where('status', 'Active')->count() }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+    <table class="table table-hover align-middle">
         <thead>
             <tr>
-                <th>sr.no</th>
+                <th>SR.NO</th>
                 <th>Name</th>
                 <th>Gender</th>
                 <th>DOB</th>
@@ -33,9 +54,9 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $volunteer->full_name }}</td>
                     <td>{{ $volunteer->gender }}</td>
-                    <td>{{ $volunteer->date_of_birth }}</td>
+                    <td>@displayDate($volunteer->date_of_birth)</td>
                     <td>{{ $volunteer->phone }}</td>
-                    <td>{{ $volunteer->status }}</td>
+                    <td><span class="badge text-bg-success">{{ $volunteer->status }}</span></td>
                     <td>
                         <a href="{{ route('volunteers.show', $volunteer->id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('volunteers.edit', $volunteer->id) }}" class="btn btn-warning btn-sm">Edit</a>
@@ -58,5 +79,6 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 @endsection

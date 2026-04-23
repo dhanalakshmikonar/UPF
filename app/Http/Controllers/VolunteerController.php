@@ -10,7 +10,11 @@ class VolunteerController extends Controller
     public function index()
     {
         $volunteers = Volunteer::all();
-        return view('volunteers.index', compact('volunteers'));
+        $pageTitle = request()->routeIs('community-connect.*')
+            ? 'Community Connect Program'
+            : 'Volunteers';
+
+        return view('volunteers.index', compact('volunteers', 'pageTitle'));
     }
 
     public function create()

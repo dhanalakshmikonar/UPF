@@ -5,18 +5,14 @@
     <style>
         /* Modern Container */
         .dashboard-container {
-            max-width: 1300px;
             margin: 0 auto;
-            padding: 30px 20px;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         .dashboard-header {
-            margin-bottom: 2.5rem;
+            margin-bottom: 0.2rem;
             color: #111827;
             font-weight: 800;
-            font-size: 2.25rem;
-            letter-spacing: -0.025em;
+            font-size: 1.65rem;
         }
 
         body.dark-mode .dashboard-header {
@@ -32,17 +28,17 @@
 
         .category-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
         }
 
         .category-card {
             background-color: #ffffff;
-            border-radius: 16px;
+            border-radius: 14px;
             border: 1px solid #e5e7eb;
             overflow: hidden;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: var(--shadow-sm);
             display: flex;
             flex-direction: column;
         }
@@ -53,8 +49,8 @@
         }
 
         .category-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
             border-color: #d1d5db;
         }
 
@@ -63,7 +59,7 @@
         }
 
         .card-header-icon {
-            padding: 24px 24px 16px;
+            padding: 20px 20px 12px;
             display: flex;
             align-items: center;
             gap: 16px;
@@ -109,7 +105,7 @@
         }
 
         .card-body {
-            padding: 0 24px 24px;
+            padding: 0 20px 20px;
             flex-grow: 1;
         }
 
@@ -125,7 +121,7 @@
         }
 
         .card-footer {
-            padding: 16px 24px;
+            padding: 14px 20px;
             background-color: #f9fafb;
             border-top: 1px solid #e5e7eb;
             display: flex;
@@ -255,7 +251,12 @@
     </style>
 
     <div class="dashboard-container">
-        <h3 class="dashboard-header">Data Management Center</h3>
+        <div class="erp-page-header">
+            <div>
+                <h3 class="dashboard-header">Data Management Center</h3>
+                <p>Manage home-wise uploads, resident directories, and imported records.</p>
+            </div>
+        </div>
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show alert-custom mb-4" role="alert">

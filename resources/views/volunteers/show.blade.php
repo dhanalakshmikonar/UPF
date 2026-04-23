@@ -1,18 +1,27 @@
 @extends('layouts.erp')
 
+@section('page-title', 'Volunteer Details')
+
 @section('content')
 <div class="card p-4">
-    <h3>Volunteer Details</h3>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h3 class="mb-1">Volunteer Details</h3>
+            <p class="text-muted mb-0">Community connect profile and contact information.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('volunteers.edit', $volunteer->id) }}" class="btn btn-outline-primary">Edit</a>
+            <a href="{{ route('volunteers.index') }}" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </div>
 
-    <p><strong>Name:</strong> {{ $volunteer->full_name }}</p>
-    <p><strong>Gender:</strong> {{ $volunteer->gender }}</p>
-    <p><strong>Date of Birth:</strong> {{ $volunteer->date_of_birth }}</p>
-    <p><strong>Phone:</strong> {{ $volunteer->phone }}</p>
-    <p><strong>Email:</strong> {{ $volunteer->email }}</p>
-    <p><strong>Status:</strong> {{ $volunteer->status }}</p>
-
-    <a href="{{ route('volunteers.index') }}" class="btn btn-secondary mt-3">
-        Back
-    </a>
+    <div class="row g-3 detail-grid">
+        <div class="col-md-4"><strong>Name</strong>{{ $volunteer->full_name }}</div>
+        <div class="col-md-4"><strong>Gender</strong>{{ $volunteer->gender }}</div>
+        <div class="col-md-4"><strong>Date of Birth</strong>@displayDate($volunteer->date_of_birth)</div>
+        <div class="col-md-4"><strong>Phone</strong>{{ $volunteer->phone ?? '-' }}</div>
+        <div class="col-md-4"><strong>Email</strong>{{ $volunteer->email ?? '-' }}</div>
+        <div class="col-md-4"><strong>Status</strong><span class="badge text-bg-success">{{ $volunteer->status }}</span></div>
+    </div>
 </div>
 @endsection

@@ -1,7 +1,7 @@
 @extends('layouts.erp')
 
 @section('content')
-<div class="card p-4 shadow-sm">
+<div class="card p-4 shadow-sm erp-form-card">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
             <h3 class="mb-1">Edit Staff</h3>
@@ -74,12 +74,12 @@
 
             <div class="col-md-6">
                 <label class="form-label">AADHAR NUMBER</label>
-                <input type="text" name="aadhaar_number" class="form-control" value="{{ old('aadhaar_number', $sponsor->aadhaar_number) }}">
+                <input type="text" name="aadhaar_number" class="form-control" value="{{ old('aadhaar_number', \App\Support\ExcelValueFormatter::identifier($sponsor->aadhaar_number)) }}">
             </div>
 
             <div class="col-md-6">
                 <label class="form-label">CONTACT NUMBER</label>
-                <textarea name="contact_number" class="form-control" rows="2">{{ old('contact_number', $sponsor->contact_number) }}</textarea>
+                <textarea name="contact_number" class="form-control" rows="2">{{ old('contact_number', \App\Support\ExcelValueFormatter::identifier($sponsor->contact_number)) }}</textarea>
             </div>
 
             <div class="col-12">

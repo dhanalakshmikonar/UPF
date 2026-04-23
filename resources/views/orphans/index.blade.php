@@ -1,10 +1,12 @@
 @extends('layouts.erp')
 
+@section('page-title', 'Inmates')
+
 @section('content')
 <style>
     .inmates-shell {
         display: grid;
-        gap: 1.5rem;
+        gap: 1rem;
     }
 
     .toolbar-card,
@@ -17,8 +19,8 @@
     }
 
     .toolbar-card {
-        padding: 1.4rem 1.5rem;
-        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+        padding: 0.95rem 1rem;
+        background: #fff;
     }
 
     .toolbar-top {
@@ -26,76 +28,86 @@
         justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
-        align-items: flex-start;
+        align-items: center;
     }
 
     .toolbar-title {
-        font-size: 1.7rem;
+        font-size: 1.25rem;
         font-weight: 800;
         color: #132238;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.1rem;
     }
 
     .toolbar-copy {
         color: #5b6b80;
         margin: 0;
+        font-size: 0.88rem;
     }
 
     .toolbar-actions {
         display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
+        gap: 0.55rem;
+        flex-wrap: nowrap;
         align-items: center;
         justify-content: flex-end;
+        max-width: none;
     }
 
     .import-form {
         display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
         align-items: center;
     }
 
     .import-file {
-        min-width: 250px;
-        border-radius: 0.85rem;
+        width: 300px;
+        min-width: 240px;
+        min-height: 38px;
+        border-radius: 0.65rem;
         border: 1px solid #d6e3f5;
-        padding: 0.65rem 0.85rem;
+        padding: 0.45rem 0.7rem;
         background: #fff;
+        font-size: 0.88rem;
     }
 
     .toolbar-btn {
-        border-radius: 0.85rem;
-        padding: 0.72rem 1rem;
+        border-radius: 0.65rem;
+        padding: 0.5rem 0.78rem;
         font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        white-space: nowrap;
     }
 
     .stats-row {
         display: flex;
-        gap: 0.9rem;
+        gap: 0.6rem;
         flex-wrap: wrap;
-        margin-top: 1rem;
+        margin-top: 0.75rem;
+        align-items: stretch;
     }
 
     .stats-card {
-        min-width: 150px;
-        padding: 1rem 1.1rem;
-        border-radius: 1rem;
-        background: rgba(255, 255, 255, 0.88);
-        border: 1px solid #d8e4ff;
+        min-width: 128px;
+        padding: 0.62rem 0.78rem;
+        border-radius: 0.75rem;
+        background: #f8fbff;
+        border: 1px solid #e4edf7;
     }
 
     .stats-label {
         display: block;
         color: #607089;
-        font-size: 0.78rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.24rem;
     }
 
     .stats-value {
-        font-size: 1.55rem;
+        font-size: 1.18rem;
         font-weight: 800;
         color: #132238;
         line-height: 1;
@@ -128,6 +140,21 @@
         color: #24364c;
     }
 
+    .inmates-table th:last-child,
+    .inmates-table td:last-child {
+        position: sticky;
+        right: 0;
+        z-index: 2;
+        min-width: 148px;
+        background: #fff;
+        box-shadow: -12px 0 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .inmates-table thead th:last-child {
+        z-index: 3;
+        background: #f7faff;
+    }
+
     .cell-strong {
         font-weight: 700;
         color: #10233d;
@@ -152,8 +179,37 @@
 
     .actions-row {
         display: flex;
-        gap: 0.45rem;
-        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+    }
+
+    .record-action {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.65rem;
+    }
+
+    .record-action.view {
+        background: #eef4ff;
+        color: #1d4ed8;
+        border: 1px solid #cfe0ff;
+    }
+
+    .record-action.edit {
+        background: #fff7e8;
+        color: #b45309;
+        border: 1px solid #fde4b2;
+    }
+
+    .record-action.delete {
+        background: #fff1f2;
+        color: #be123c;
+        border: 1px solid #ffd5dc;
     }
 
     .empty-state {
@@ -178,6 +234,16 @@
         .toolbar-btn {
             width: 100%;
         }
+    }
+
+    body.dark-mode .inmates-table th:last-child,
+    body.dark-mode .inmates-table td:last-child {
+        background: #020617;
+        box-shadow: -12px 0 24px rgba(0, 0, 0, 0.35);
+    }
+
+    body.dark-mode .inmates-table thead th:last-child {
+        background: #0f172a;
     }
 </style>
 
@@ -215,16 +281,19 @@
                 <form action="{{ route('orphans.import') }}" method="POST" enctype="multipart/form-data" class="import-form">
                     @csrf
                     <input type="file" name="document" class="form-control import-file" accept=".xlsx,.csv,.txt" required>
-                    <button type="submit" class="btn btn-primary toolbar-btn">Upload File</button>
+                    <button type="submit" class="btn btn-primary toolbar-btn">
+                        <i class="bi bi-cloud-arrow-up"></i> Upload
+                    </button>
                 </form>
 
                 <form action="{{ route('orphans.clear') }}" method="POST" onsubmit="return confirm('Delete all inmate records?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-outline-danger toolbar-btn">Delete All</button>
+                    <button type="submit" class="btn btn-outline-danger toolbar-btn">
+                        <i class="bi bi-trash3"></i> Delete All
+                    </button>
                 </form>
 
-                <a href="{{ route('orphans.create') }}" class="btn btn-outline-primary toolbar-btn">Add Inmate</a>
             </div>
         </div>
 
@@ -237,6 +306,9 @@
                 <span class="stats-label">Active Records</span>
                 <span class="stats-value">{{ $activeCount }}</span>
             </div>
+            <a href="{{ route('orphans.create') }}" class="btn btn-outline-primary toolbar-btn">
+                <i class="bi bi-person-plus"></i> Add Inmate
+            </a>
         </div>
     </section>
 
@@ -264,11 +336,11 @@
                 <tbody>
                 @forelse($orphans as $orphan)
                     <tr>
-                        <td>{{ $orphan->serial_no ?? '-' }}</td>
+                        <td>@displaySerial($orphan->serial_no)</td>
                         <td class="cell-strong">{{ $orphan->full_name }}</td>
                         <td>{{ $orphan->age ?? '-' }}</td>
-                        <td class="cell-muted">{{ $orphan->date_of_birth }}</td>
-                        <td class="cell-muted">{{ $orphan->admission_date ?? '-' }}</td>
+                        <td class="cell-muted">@displayDate($orphan->date_of_birth)</td>
+                        <td class="cell-muted">@displayDate($orphan->admission_date)</td>
                         <td>{{ $orphan->gender }}</td>
                         <td>{{ $orphan->category ?? '-' }}</td>
                         <td class="cell-muted">{{ \Illuminate\Support\Str::limit($orphan->address ?? '-', 80) }}</td>
@@ -279,12 +351,16 @@
                         <td><span class="status-chip">{{ $orphan->status }}</span></td>
                         <td>
                             <div class="actions-row">
-                                <a href="{{ route('orphans.show', $orphan->id) }}" class="btn btn-sm btn-info" style="color:#000; font-weight:600;">View</a>
-                                <a href="{{ route('orphans.edit', $orphan->id) }}" class="btn btn-sm btn-warning" style="color:#000; font-weight:600;">Edit</a>
+                                <a href="{{ route('orphans.show', $orphan->id) }}" class="record-action view" title="View inmate">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ route('orphans.edit', $orphan->id) }}" class="record-action edit" title="Edit inmate">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
                                 <form action="{{ route('orphans.destroy', $orphan->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this inmate?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                    <button type="submit" class="record-action delete" title="Delete inmate">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
