@@ -215,24 +215,7 @@
             <p>Central workspace for managing inmates, staff, volunteer programs, and home-wise records with quick access to the areas used most often by the administration team.</p>
         </div>
 
-        <div class="status-panel">
-            <div class="panel-title">
-                <h4>System Status</h4>
-                <span class="badge text-bg-success">Active</span>
-            </div>
-            <div class="status-line">
-                <span class="text-muted">Records Module</span>
-                <span class="status-dot"></span>
-            </div>
-            <div class="status-line">
-                <span class="text-muted">Uploads</span>
-                <span class="status-dot"></span>
-            </div>
-            <div class="status-line">
-                <span class="text-muted">Search</span>
-                <span class="status-dot"></span>
-            </div>
-        </div>
+      <!-- Space of status panel -->
     </section>
 
     <section class="module-grid">
