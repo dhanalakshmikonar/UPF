@@ -119,7 +119,7 @@
 
     .staff-table {
         margin-bottom: 0;
-        min-width: 1600px;
+        min-width: 1780px;
     }
 
     .staff-table thead th {
@@ -164,6 +164,19 @@
         color: #697b91;
         font-size: 0.92rem;
         line-height: 1.5;
+    }
+
+    .staff-photo {
+        width: 82px;
+        height: 104px;
+        display: block;
+        object-fit: contain;
+        object-position: center;
+        padding: 0.25rem;
+        border-radius: 0.75rem;
+        border: 1px solid #d8e4f2;
+        background: #f8fbff;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
     }
 
     .actions-row {
@@ -309,6 +322,8 @@
                         <th>HOME</th>
                         <th>AADHAR NUMBER</th>
                         <th>CONTACT NUMBER</th>
+                        <th>CUG NUMBER</th>
+                        <th>PHOTO</th>
                         <th>REMARKS</th>
                         <th>ACTIONS</th>
                     </tr>
@@ -327,6 +342,16 @@
                         <td>{{ $sponsor->home ?? '-' }}</td>
                         <td>@displayIdentifier($sponsor->aadhaar_number)</td>
                         <td class="cell-muted">{{ \Illuminate\Support\Str::limit(\App\Support\ExcelValueFormatter::identifier($sponsor->contact_number) ?? '-', 55) }}</td>
+                        <td class="cell-muted">@displayIdentifier($sponsor->cug_number)</td>
+                        <td>
+                            @if($sponsor->photo)
+                                <a href="{{ asset($sponsor->photo) }}" target="_blank" title="Open staff photo">
+                                    <img src="{{ asset($sponsor->photo) }}" class="staff-photo" alt="{{ $sponsor->name }} photo">
+                                </a>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="cell-muted">{{ \Illuminate\Support\Str::limit($sponsor->remarks ?? '-', 60) }}</td>
                         <td>
                             <div class="actions-row">
@@ -348,7 +373,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="13">
+                        <td colspan="15">
                             <div class="empty-state">
                                 <h4>No staff records yet</h4>
                                 <p class="mb-0">Upload the staff Excel file or add a staff member manually to get started.</p>

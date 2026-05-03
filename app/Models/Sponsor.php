@@ -21,6 +21,7 @@ class Sponsor extends Model
         'home',
         'aadhaar_number',
         'contact_number',
+        'cug_number',
         'remarks',
         'date_of_birth',
         'date_of_joining',

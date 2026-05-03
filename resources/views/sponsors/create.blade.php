@@ -81,6 +81,11 @@
                 <textarea name="contact_number" class="form-control" rows="2">{{ old('contact_number') }}</textarea>
             </div>
 
+            <div class="col-md-6">
+                <label class="form-label">CUG NUMBER</label>
+                <input type="text" name="cug_number" class="form-control" value="{{ old('cug_number') }}">
+            </div>
+
             <div class="col-12">
                 <label class="form-label">ADDRESS</label>
                 <textarea name="address" class="form-control" rows="3">{{ old('address') }}</textarea>

@@ -1,6 +1,20 @@
 @extends('layouts.erp')
 
 @section('content')
+<style>
+    .staff-photo-large {
+        width: min(100%, 320px);
+        max-height: 420px;
+        object-fit: contain;
+        object-position: center;
+        padding: 0.5rem;
+        border-radius: 0.9rem;
+        border: 1px solid #d8e4f2;
+        background: #f8fbff;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+    }
+</style>
+
 <div class="card p-4 shadow-sm">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
@@ -25,7 +39,8 @@
         <div class="col-md-3"><strong>HOME</strong><div>{{ $sponsor->home ?? '-' }}</div></div>
         <div class="col-md-3"><strong>AADHAR NUMBER</strong><div>@displayIdentifier($sponsor->aadhaar_number)</div></div>
 
-        <div class="col-12"><strong>CONTACT NUMBER</strong><div>@displayIdentifier($sponsor->contact_number)</div></div>
+        <div class="col-md-6"><strong>CONTACT NUMBER</strong><div>@displayIdentifier($sponsor->contact_number)</div></div>
+        <div class="col-md-6"><strong>CUG NUMBER</strong><div>@displayIdentifier($sponsor->cug_number)</div></div>
         <div class="col-12"><strong>ADDRESS</strong><div>{{ $sponsor->address ?? '-' }}</div></div>
         <div class="col-12"><strong>REMARKS</strong><div>{{ $sponsor->remarks ?? '-' }}</div></div>
 
@@ -33,7 +48,9 @@
             <strong>PHOTO</strong>
             <div class="mt-2">
                 @if($sponsor->photo)
-                    <img src="{{ asset('storage/'.$sponsor->photo) }}" width="140" class="img-thumbnail" alt="Staff photo">
+                    <a href="{{ asset($sponsor->photo) }}" target="_blank" title="Open staff photo">
+                        <img src="{{ asset($sponsor->photo) }}" class="staff-photo-large" alt="{{ $sponsor->name }} photo">
+                    </a>
                 @else
                     <div>-</div>
                 @endif

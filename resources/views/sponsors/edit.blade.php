@@ -1,6 +1,19 @@
 @extends('layouts.erp')
 
 @section('content')
+<style>
+    .staff-photo-preview {
+        width: 180px;
+        max-height: 240px;
+        object-fit: contain;
+        object-position: center;
+        padding: 0.35rem;
+        border-radius: 0.85rem;
+        border: 1px solid #d8e4f2;
+        background: #f8fbff;
+    }
+</style>
+
 <div class="card p-4 shadow-sm erp-form-card">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
@@ -82,6 +95,11 @@
                 <textarea name="contact_number" class="form-control" rows="2">{{ old('contact_number', \App\Support\ExcelValueFormatter::identifier($sponsor->contact_number)) }}</textarea>
             </div>
 
+            <div class="col-md-6">
+                <label class="form-label">CUG NUMBER</label>
+                <input type="text" name="cug_number" class="form-control" value="{{ old('cug_number', \App\Support\ExcelValueFormatter::identifier($sponsor->cug_number)) }}">
+            </div>
+
             <div class="col-12">
                 <label class="form-label">ADDRESS</label>
                 <textarea name="address" class="form-control" rows="3">{{ old('address', $sponsor->address) }}</textarea>
@@ -96,7 +114,9 @@
                 <label class="form-label">PHOTO</label>
                 @if($sponsor->photo)
                     <div class="mb-2">
-                        <img src="{{ asset('storage/'.$sponsor->photo) }}" width="100" class="img-thumbnail" alt="Staff photo">
+                        <a href="{{ asset($sponsor->photo) }}" target="_blank" title="Open staff photo">
+                            <img src="{{ asset($sponsor->photo) }}" class="staff-photo-preview" alt="{{ $sponsor->name }} photo">
+                        </a>
                     </div>
                 @endif
                 <input type="file" name="photo" class="form-control">

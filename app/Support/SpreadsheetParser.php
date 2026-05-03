@@ -64,6 +64,7 @@ class SpreadsheetParser
         $sharedStrings = $this->extractSharedStrings($zip);
         $sheetPath = $this->resolveWorksheetPath($zip, $sheetName) ?? 'xl/worksheets/sheet1.xml';
         $sheetXml = $zip->getFromName($sheetPath);
+        $embeddedImages = $this->extractWorksheetImages($zip, $sheetPath, $sheetXml ?: '');
         $zip->close();
 
         if ($sheetXml === false) {
@@ -82,6 +83,7 @@ class SpreadsheetParser
 
         foreach ($xml->sheetData->row as $sheetRow) {
             $rowValues = [];
+            $rowNumber = isset($sheetRow['r']) ? (int) $sheetRow['r'] : count($worksheetRows) + 1;
 
             foreach ($sheetRow->c as $cell) {
                 $reference = (string) ($cell['r'] ?? '');
@@ -104,21 +106,206 @@ class SpreadsheetParser
                 continue;
             }
 
-            $worksheetRows[] = $rowValues;
+            $worksheetRows[] = [
+                'number' => $rowNumber,
+                'values' => $rowValues,
+            ];
         }
 
         if ($worksheetRows === []) {
             return $rows;
         }
 
-        $headerRowIndex = $this->detectHeaderRowIndex($worksheetRows);
-        $headers = $this->normalizeHeaders($this->padRow($worksheetRows[$headerRowIndex], $maxColumns));
+        $rowValues = array_map(static fn (array $row): array => $row['values'], $worksheetRows);
+        $headerRowIndex = $this->detectHeaderRowIndex($rowValues);
+        $headers = $this->normalizeHeaders($this->padRow($worksheetRows[$headerRowIndex]['values'], $maxColumns));
 
         foreach (array_slice($worksheetRows, $headerRowIndex + 1) as $rowValues) {
-            $rows->push($this->combineHeadersAndRow($headers, $this->padRow($rowValues, $maxColumns)));
+            $combined = $this->combineHeadersAndRow($headers, $this->padRow($rowValues['values'], $maxColumns));
+            $imagesForRow = $embeddedImages[$rowValues['number']] ?? [];
+
+            if ($imagesForRow !== []) {
+                $combined['_embedded_images'] = $this->mapImagesToHeaders($headers, $imagesForRow);
+            }
+
+            $rows->push($combined);
         }
 
         return $rows;
+    }
+
+    private function extractWorksheetImages(ZipArchive $zip, string $sheetPath, string $sheetXml): array
+    {
+        if ($sheetXml === '') {
+            return [];
+        }
+
+        $worksheet = simplexml_load_string($sheetXml);
+
+        if (!$worksheet instanceof SimpleXMLElement || !isset($worksheet->drawing)) {
+            return [];
+        }
+
+        $relationshipId = (string) $worksheet->drawing->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'];
+
+        if ($relationshipId === '') {
+            return [];
+        }
+
+        $sheetDirectory = dirname($sheetPath);
+        $sheetRelationshipsPath = $sheetDirectory . '/_rels/' . basename($sheetPath) . '.rels';
+        $sheetRelationshipsXml = $zip->getFromName($sheetRelationshipsPath);
+
+        if ($sheetRelationshipsXml === false) {
+            return [];
+        }
+
+        $drawingPath = $this->resolveRelationshipTarget($sheetRelationshipsXml, $relationshipId, $sheetDirectory);
+
+        if ($drawingPath === null) {
+            return [];
+        }
+
+        $drawingXml = $zip->getFromName($drawingPath);
+
+        if ($drawingXml === false) {
+            return [];
+        }
+
+        $drawingDirectory = dirname($drawingPath);
+        $drawingRelationshipsPath = $drawingDirectory . '/_rels/' . basename($drawingPath) . '.rels';
+        $drawingRelationshipsXml = $zip->getFromName($drawingRelationshipsPath);
+        $mediaRelationships = $drawingRelationshipsXml === false
+            ? []
+            : $this->extractRelationshipTargets($drawingRelationshipsXml, $drawingDirectory);
+
+        if ($mediaRelationships === []) {
+            return [];
+        }
+
+        $drawing = simplexml_load_string($drawingXml);
+
+        if (!$drawing instanceof SimpleXMLElement) {
+            return [];
+        }
+
+        $images = [];
+        $anchors = $drawing->xpath('//*[local-name()="oneCellAnchor" or local-name()="twoCellAnchor"]') ?: [];
+
+        foreach ($anchors as $anchor) {
+            $from = $anchor->xpath('./*[local-name()="from"]')[0] ?? null;
+            $to = $anchor->xpath('./*[local-name()="to"]')[0] ?? null;
+            $blip = $anchor->xpath('.//*[local-name()="blip"]')[0] ?? null;
+
+            if (!$from instanceof SimpleXMLElement || !$blip instanceof SimpleXMLElement) {
+                continue;
+            }
+
+            $rowNode = $from->xpath('./*[local-name()="row"]')[0] ?? null;
+            $columnNode = $from->xpath('./*[local-name()="col"]')[0] ?? null;
+            $fromRow = (int) ($rowNode instanceof SimpleXMLElement ? (string) $rowNode : '0');
+            $toRowNode = $to instanceof SimpleXMLElement ? ($to->xpath('./*[local-name()="row"]')[0] ?? null) : null;
+            $toRow = $toRowNode instanceof SimpleXMLElement ? (int) (string) $toRowNode : $fromRow;
+            $row = (int) floor(($fromRow + $toRow) / 2) + 1;
+            $column = (int) ($columnNode instanceof SimpleXMLElement ? (string) $columnNode : '0');
+            $embedId = (string) $blip->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['embed'];
+            $mediaPath = $mediaRelationships[$embedId] ?? null;
+
+            if ($mediaPath === null) {
+                continue;
+            }
+
+            $contents = $zip->getFromName($mediaPath);
+
+            if ($contents === false || $contents === '') {
+                continue;
+            }
+
+            $extension = strtolower(pathinfo($mediaPath, PATHINFO_EXTENSION)) ?: 'png';
+
+            $images[$row][$column][] = [
+                'contents' => base64_encode($contents),
+                'extension' => $extension,
+            ];
+        }
+
+        return $images;
+    }
+
+    private function mapImagesToHeaders(array $headers, array $imagesForRow): array
+    {
+        $mapped = [];
+
+        foreach ($imagesForRow as $column => $images) {
+            $header = $headers[$column] ?? 'column_' . ($column + 1);
+            $mapped[$header] = array_merge($mapped[$header] ?? [], $images);
+        }
+
+        $photoColumn = array_search('photo', $headers, true);
+
+        if (!isset($mapped['photo']) && $photoColumn !== false) {
+            foreach ($mapped as $header => $images) {
+                $imageColumn = array_search($header, $headers, true);
+
+                if ($imageColumn !== false && abs($photoColumn - $imageColumn) <= 1) {
+                    $mapped['photo'] = $images;
+                    break;
+                }
+            }
+        }
+
+        return $mapped;
+    }
+
+    private function resolveRelationshipTarget(string $relationshipsXml, string $relationshipId, string $baseDirectory): ?string
+    {
+        $targets = $this->extractRelationshipTargets($relationshipsXml, $baseDirectory);
+
+        return $targets[$relationshipId] ?? null;
+    }
+
+    private function extractRelationshipTargets(string $relationshipsXml, string $baseDirectory): array
+    {
+        $relationships = simplexml_load_string($relationshipsXml);
+
+        if (!$relationships instanceof SimpleXMLElement) {
+            return [];
+        }
+
+        $targets = [];
+
+        foreach ($relationships->Relationship as $relationship) {
+            $id = (string) ($relationship['Id'] ?? '');
+            $target = (string) ($relationship['Target'] ?? '');
+
+            if ($id === '' || $target === '' || str_starts_with($target, 'http')) {
+                continue;
+            }
+
+            $targets[$id] = $this->normalizeZipPath($baseDirectory . '/' . $target);
+        }
+
+        return $targets;
+    }
+
+    private function normalizeZipPath(string $path): string
+    {
+        $parts = [];
+
+        foreach (explode('/', str_replace('\\', '/', $path)) as $part) {
+            if ($part === '' || $part === '.') {
+                continue;
+            }
+
+            if ($part === '..') {
+                array_pop($parts);
+                continue;
+            }
+
+            $parts[] = $part;
+        }
+
+        return implode('/', $parts);
     }
 
     private function resolveWorksheetPath(ZipArchive $zip, ?string $sheetName): ?string

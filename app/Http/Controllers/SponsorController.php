@@ -8,6 +8,7 @@ use App\Support\SpreadsheetParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -66,7 +67,8 @@ class SponsorController extends Controller
                     $address = $this->getRowValue($row, 'address');
                     $home = $this->getRowValue($row, 'home');
                     $aadhaarNumber = ExcelValueFormatter::identifier($this->getRowValue($row, ['aadhaar_number', 'aadhar_number', 'aadhaar', 'aadhar']));
-                    $contactNumber = ExcelValueFormatter::identifier($this->getRowValue($row, ['contact_number', 'contact', 'phone', 'mobile']));
+                    $contactNumber = ExcelValueFormatter::identifier($this->getRowValue($row, ['contact_number', 'contact_no', 'contact', 'phone', 'mobile']));
+                    $cugNumber = ExcelValueFormatter::identifier($this->getRowValue($row, ['cug_number', 'cug_no', 'cug']));
                     $remarks = $this->getRowValue($row, ['remarks', 'remark']);
 
                     if ($name === null && $dateOfBirth === null) {
@@ -78,7 +80,11 @@ class SponsorController extends Controller
                         continue;
                     }
 
-                    Sponsor::create([
+                    $sponsor = Sponsor::query()
+                        ->whereRaw('LOWER(TRIM(name)) = ?', [Str::lower(trim($name))])
+                        ->first();
+
+                    $data = [
                         'serial_no' => $serialNo,
                         'name' => $name,
                         'age' => $age,
@@ -88,6 +94,7 @@ class SponsorController extends Controller
                         'home' => $home,
                         'aadhaar_number' => $aadhaarNumber,
                         'contact_number' => $contactNumber,
+                        'cug_number' => $cugNumber,
                         'remarks' => $remarks,
                         'date_of_birth' => $dateOfBirth,
                         'date_of_joining' => $dateOfJoining,
@@ -95,9 +102,26 @@ class SponsorController extends Controller
                         'email' => $this->getRowValue($row, 'email'),
                         'amount_donated' => 0,
                         'donation_date' => null,
-                        'photo' => null,
                         'aadhaar_document' => null,
-                    ]);
+                    ];
+
+                    $photoPath = $this->storeEmbeddedPhoto($row, $name, $serialNo);
+
+                    if ($photoPath !== null) {
+                        if ($sponsor?->photo) {
+                            $this->deletePublicPhoto($sponsor->photo);
+                        }
+
+                        $data['photo'] = $photoPath;
+                    } elseif ($sponsor === null) {
+                        $data['photo'] = null;
+                    }
+
+                    if ($sponsor) {
+                        $sponsor->update($data);
+                    } else {
+                        Sponsor::create($data);
+                    }
 
                     $importedCount++;
                 }
@@ -133,6 +157,7 @@ class SponsorController extends Controller
             'home' => 'nullable|string|max:255',
             'aadhaar_number' => 'nullable|string|max:255',
             'contact_number' => 'nullable|string',
+            'cug_number' => 'nullable|string',
             'remarks' => 'nullable|string',
             'date_of_birth' => 'nullable|date',
             'date_of_joining' => 'nullable|date',
@@ -145,7 +170,7 @@ class SponsorController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $data['photo'] = $request->file('photo')->store('sponsors/photos', 'public');
+            $data['photo'] = $this->storeUploadedPhoto($request->file('photo'), $data['name'], $data['serial_no'] ?? null);
         }
 
         if ($request->hasFile('aadhaar_document')) {
@@ -155,6 +180,7 @@ class SponsorController extends Controller
         $data['phone'] = $data['phone'] ?? $data['contact_number'] ?? null;
         $data['aadhaar_number'] = ExcelValueFormatter::identifier($data['aadhaar_number'] ?? null);
         $data['contact_number'] = ExcelValueFormatter::identifier($data['contact_number'] ?? null);
+        $data['cug_number'] = ExcelValueFormatter::identifier($data['cug_number'] ?? null);
         $data['phone'] = ExcelValueFormatter::identifier($data['phone'] ?? null);
         $data['amount_donated'] = $data['amount_donated'] ?? 0;
         $data['donation_date'] = $data['donation_date'] ?? null;
@@ -188,6 +214,7 @@ class SponsorController extends Controller
             'home' => 'nullable|string|max:255',
             'aadhaar_number' => 'nullable|string|max:255',
             'contact_number' => 'nullable|string',
+            'cug_number' => 'nullable|string',
             'remarks' => 'nullable|string',
             'date_of_birth' => 'nullable|date',
             'date_of_joining' => 'nullable|date',
@@ -201,10 +228,10 @@ class SponsorController extends Controller
 
         if ($request->hasFile('photo')) {
             if ($sponsor->photo) {
-                Storage::disk('public')->delete($sponsor->photo);
+                $this->deletePublicPhoto($sponsor->photo);
             }
 
-            $data['photo'] = $request->file('photo')->store('sponsors/photos', 'public');
+            $data['photo'] = $this->storeUploadedPhoto($request->file('photo'), $data['name'], $data['serial_no'] ?? null);
         }
 
         if ($request->hasFile('aadhaar_document')) {
@@ -218,6 +245,7 @@ class SponsorController extends Controller
         $data['phone'] = $data['phone'] ?? $data['contact_number'] ?? null;
         $data['aadhaar_number'] = ExcelValueFormatter::identifier($data['aadhaar_number'] ?? null);
         $data['contact_number'] = ExcelValueFormatter::identifier($data['contact_number'] ?? null);
+        $data['cug_number'] = ExcelValueFormatter::identifier($data['cug_number'] ?? null);
         $data['phone'] = ExcelValueFormatter::identifier($data['phone'] ?? null);
         $data['amount_donated'] = $data['amount_donated'] ?? 0;
         $data['donation_date'] = $data['donation_date'] ?? null;
@@ -236,7 +264,7 @@ class SponsorController extends Controller
 
             foreach ($sponsors as $sponsor) {
                 if ($sponsor->photo) {
-                    Storage::disk('public')->delete($sponsor->photo);
+                    $this->deletePublicPhoto($sponsor->photo);
                 }
 
                 if ($sponsor->aadhaar_document) {
@@ -255,7 +283,7 @@ class SponsorController extends Controller
     public function destroy(Sponsor $sponsor)
     {
         if ($sponsor->photo) {
-            Storage::disk('public')->delete($sponsor->photo);
+            $this->deletePublicPhoto($sponsor->photo);
         }
 
         if ($sponsor->aadhaar_document) {
@@ -276,6 +304,85 @@ class SponsorController extends Controller
 
             if ($value !== null && trim((string) $value) !== '') {
                 return trim((string) $value);
+            }
+        }
+
+        return null;
+    }
+
+    private function storeUploadedPhoto(\Illuminate\Http\UploadedFile $file, string $name, ?string $serialNo): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true) ? $extension : 'jpg';
+        $fileName = $this->makePhotoFileName($name, $serialNo, $extension);
+        $relativePath = 'img/staff/photos/' . $fileName;
+
+        File::ensureDirectoryExists(public_path('img/staff/photos'));
+        $file->move(public_path('img/staff/photos'), $fileName);
+
+        return $relativePath;
+    }
+
+    private function deletePublicPhoto(string $path): void
+    {
+        $normalizedPath = ltrim(str_replace('\\', '/', $path), '/');
+
+        if (str_starts_with($normalizedPath, 'img/staff/photos/')) {
+            File::delete(public_path($normalizedPath));
+            return;
+        }
+
+        Storage::disk('public')->delete($normalizedPath);
+    }
+
+    private function storeEmbeddedPhoto(array $row, string $name, ?string $serialNo): ?string
+    {
+        $image = $this->getEmbeddedImage($row, ['photo', 'staff_photo']);
+
+        if ($image === null) {
+            return null;
+        }
+
+        $contents = base64_decode((string) ($image['contents'] ?? ''), true);
+
+        if ($contents === false || $contents === '') {
+            return null;
+        }
+
+        $extension = strtolower((string) ($image['extension'] ?? 'png'));
+        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true) ? $extension : 'png';
+        $path = 'img/staff/photos/' . $this->makePhotoFileName($name, $serialNo, $extension);
+
+        File::ensureDirectoryExists(public_path('img/staff/photos'));
+        File::put(public_path($path), $contents);
+
+        return $path;
+    }
+
+    private function makePhotoFileName(string $name, ?string $serialNo, string $extension): string
+    {
+        $fileName = trim(($serialNo ?: 'staff') . '-' . Str::slug($name), '-');
+
+        return $fileName . '-' . Str::random(8) . '.' . $extension;
+    }
+
+    private function getEmbeddedImage(array $row, array $keys): ?array
+    {
+        $images = $row['_embedded_images'] ?? [];
+
+        if (!is_array($images)) {
+            return null;
+        }
+
+        foreach ($keys as $key) {
+            if (!empty($images[$key][0]) && is_array($images[$key][0])) {
+                return $images[$key][0];
+            }
+        }
+
+        foreach ($images as $items) {
+            if (!empty($items[0]) && is_array($items[0])) {
+                return $items[0];
             }
         }
 
